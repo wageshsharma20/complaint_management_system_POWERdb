@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Complaint Management System</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Register a New Complaint</h2>
+        <form id="complaintForm" method="post">
+            
+            <div class="form-group">
+                <span><label for="complaintId">Complaint ID:</label> <label id="complaintIdMsg"></label></span>
+                <input type="text" class="form-control" name="complaintId" id="complaintId" placeholder="Enter Complaint ID" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="customerName">Customer Name:</label>
+                <input type="text" class="form-control" id="customerName" placeholder="Enter Your Name" name="customerName">
+            </div>
+            
+            <div class="form-group">
+                <label for="customerEmail">Email Address:</label>
+                <input type="email" class="form-control" id="customerEmail" placeholder="Enter Your Email" name="customerEmail">
+            </div>
+            
+            <div class="form-group">
+                <label for="complaintDesc">Complaint Description:</label>
+                <textarea class="form-control" id="complaintDesc" placeholder="Describe your issue here..." name="complaintDesc" rows="4"></textarea>
+            </div>
+
+            <input type="button" class="btn btn-danger" id="complaintSave" value="Submit Complaint" onclick="saveComplaint();">
+        </form>
+    </div>
+
+    <script>
+        $("#complaintId").focus();
+
+        function validateAndGetFormData() {
+            var complaintIdVar = $("#complaintId").val();
+            if (complaintIdVar === "") {
+                alert("Complaint ID is required.");
+                $("#complaintId").focus();
+                return "";
+            }
+            
+            var customerNameVar = $("#customerName").val();
+            if (customerNameVar === "") {
+                alert("Customer Name is required.");
+                $("#customerName").focus();
+                return "";
+            }
+            
+            var customerEmailVar = $("#customerEmail").val();
+            if (customerEmailVar === "") {
+                alert("Email Address is required.");
+                $("#customerEmail").focus();
+                return "";
+            }
+
+            var complaintDescVar = $("#complaintDesc").val();
+            if (complaintDescVar === "") {
+                alert("Complaint Description is required.");
+                $("#complaintDesc").focus();
+                return "";
+            }
+
+            var jsonStrObj = {
+                id: complaintIdVar,
+                name: customerNameVar,
+                email: customerEmailVar,
+                description: complaintDescVar
+            };
+            
+            return JSON.stringify(jsonStrObj);
+        }
+
+        function createPUTRequest(connToken, jsonObj, dbName, relName) {
+            var putRequest = "{\n"
+                + "\"token\" : \"" + connToken + "\","
+                + "\"dbName\": \"" + dbName + "\",\n" 
+                + "\"cmd\" : \"PUT\",\n"
+                + "\"rel\" : \"" + relName + "\","
+                + "\"jsonStr\": \n" + jsonObj + "\n"
+                + "}";
+            return putRequest;
+        }
+
+        function executeCommand(reqString, dbBaseUrl, apiEndPointUrl) {
+            var url = dbBaseUrl + apiEndPointUrl;
+            var jsonObj;
+            $.post(url, reqString, function (result) {
+                jsonObj = JSON.parse(result);
+            }).fail(function (result) {
+                var dataJsonObj = result.responseText;
+                jsonObj = JSON.parse(dataJsonObj);
+            });
+            return jsonObj;
+        }
+
+        function resetForm() {
+            $("#complaintId").val("");
+            $("#customerName").val("");
+            $("#customerEmail").val("");
+            $("#complaintDesc").val("");
+            $("#complaintId").focus();
+        }
+
+        function saveComplaint() {
+            var jsonStr = validateAndGetFormData();
+            if (jsonStr === "") {
+                return;
+            }
+
+            var connectionToken = "90935119|-31949240754958788|90903686"; 
+            var databaseName = "Complaint_system";                
+            var relationName = "COMPLAINT_TABLE";             
+            
+            var putReqStr = createPUTRequest(connectionToken, jsonStr, databaseName, relationName);
+            
+            alert("Sent Request:\n" + putReqStr); 
+            
+            jQuery.ajaxSetup({async: false});
+            var resultObj = executeCommand(putReqStr, "http://api.login2explore.com:5577", "/api/iml");
+
+            alert("Response:\n" + JSON.stringify(resultObj));
+            jQuery.ajaxSetup({async: true});
+            
+            resetForm();
+        }
+    </script>
+</body>
+</html>
